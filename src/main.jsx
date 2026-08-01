@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
+import "./index.css"; // Tailwind (base + utilidades) — estilos de la app
 import "./storage.js"; // define window.storage ANTES de cargar la app
 import App from "./App.jsx";
 import Login from "./Login.jsx";
