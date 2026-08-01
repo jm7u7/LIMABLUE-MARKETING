@@ -5,6 +5,7 @@ import "./storage.js"; // define window.storage ANTES de cargar la app
 import App from "./App.jsx";
 import Login from "./Login.jsx";
 import UsersAdmin from "./UsersAdmin.jsx";
+import ChangePassword from "./ChangePassword.jsx";
 
 const ADMIN_CARGOS = ["gerente", "coordinador"];
 
@@ -38,6 +39,7 @@ function Root() {
   }, []);
 
   const [showUsers, setShowUsers] = useState(false);
+  const [showPass, setShowPass] = useState(false);
 
   if (me === undefined) return <Splash />;
   if (!me) return <Login onLogin={setMe} />;
@@ -46,26 +48,34 @@ function Root() {
   window.__AUTH_USER__ = me;
   const esAdmin = ADMIN_CARGOS.includes(me.cargo);
 
+  const btnBase = {
+    display: "flex", alignItems: "center", gap: 8, border: "none",
+    borderRadius: 999, padding: "11px 16px", fontSize: 13, fontWeight: 600,
+    fontFamily: "'Inter', system-ui, sans-serif", cursor: "pointer",
+    boxShadow: "0 8px 24px rgba(15,23,42,0.25)",
+  };
+
   return (
     <>
       <App />
-      {esAdmin && (
-        <button
-          onClick={() => setShowUsers(true)}
-          title="Gestionar cuentas de usuario"
-          style={{
-            position: "fixed", right: 18, bottom: 18, zIndex: 9998,
-            display: "flex", alignItems: "center", gap: 8,
-            background: "#0F172A", color: "#FFF", border: "none",
-            borderRadius: 999, padding: "11px 16px", fontSize: 13, fontWeight: 600,
-            fontFamily: "'Inter', system-ui, sans-serif", cursor: "pointer",
-            boxShadow: "0 8px 24px rgba(15,23,42,0.25)",
-          }}
-        >
-          <span style={{ fontSize: 15 }}>👤</span> Usuarios
+      {/* Botones flotantes (apilados abajo a la derecha) */}
+      <div style={{
+        position: "fixed", right: 18, bottom: 18, zIndex: 9998,
+        display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10,
+      }}>
+        {esAdmin && (
+          <button onClick={() => setShowUsers(true)} title="Gestionar cuentas de usuario"
+            style={{ ...btnBase, background: "#0F172A", color: "#FFF" }}>
+            <span style={{ fontSize: 15 }}>👤</span> Usuarios
+          </button>
+        )}
+        <button onClick={() => setShowPass(true)} title="Cambiar mi contraseña"
+          style={{ ...btnBase, background: "#FFFFFF", color: "#0F172A", border: "1px solid #E2E8F0" }}>
+          <span style={{ fontSize: 15 }}>🔑</span> Contraseña
         </button>
-      )}
+      </div>
       {showUsers && <UsersAdmin me={me} onClose={() => setShowUsers(false)} />}
+      {showPass && <ChangePassword me={me} onClose={() => setShowPass(false)} />}
     </>
   );
 }
