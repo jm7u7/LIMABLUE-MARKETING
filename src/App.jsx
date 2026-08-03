@@ -2344,11 +2344,14 @@ function TicketOnlyView() {
     if (!form.titulo.trim()) { setError("Cuéntanos qué necesitas."); return; }
     if (!form.areaOrigen.trim()) { setError("Indica qué área o sede lo reporta."); return; }
     try {
-      const res = await window.storage.get("ticket-inbox", true);
-      const actuales = res ? JSON.parse(res.value) : [];
-      const nuevo = { ...form, id: uid(), creado: nowStamp() };
-      await window.storage.set("ticket-inbox", JSON.stringify([nuevo, ...actuales]), true);
-      setSent(true);
+      // Endpoint PÚBLICO: no requiere sesión (esta pantalla la usa gente de otras áreas sin cuenta).
+      const res = await fetch("/api/ticket", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (res.ok) setSent(true);
+      else setError("No se pudo enviar. Intenta de nuevo.");
     } catch (e) {
       setError("No se pudo enviar. Revisa tu conexión e intenta de nuevo.");
     }

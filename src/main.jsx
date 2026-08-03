@@ -17,11 +17,15 @@ function Splash() {
   );
 }
 
+// La pantalla pública de tickets (/#ticket) no requiere login.
+const IS_TICKET = typeof window !== "undefined" && window.location.hash === "#ticket";
+
 function Root() {
   // undefined = verificando sesion | null = no logueado | objeto = usuario
   const [me, setMe] = useState(undefined);
 
   useEffect(() => {
+    if (IS_TICKET) return; // no consultamos sesión en el formulario público de tickets
     fetch("/api/me", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : null))
       .then(setMe)
@@ -40,6 +44,9 @@ function Root() {
 
   const [showUsers, setShowUsers] = useState(false);
   const [showPass, setShowPass] = useState(false);
+
+  // Formulario público de tickets: se muestra directo, sin login ni botones de admin.
+  if (IS_TICKET) return <App />;
 
   if (me === undefined) return <Splash />;
   if (!me) return <Login onLogin={setMe} />;
