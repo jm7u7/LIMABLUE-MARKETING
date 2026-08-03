@@ -1706,9 +1706,13 @@ function ProduccionPanel({ permisos }) {
               </div>
             </div>
             <button
-              onClick={() => {
+              onClick={async () => {
                 if (itemAprobando.firmaGerenciaGeneral && itemAprobando.firmaGerenciaMarketing) {
-                  persist((items || []).map((i) => (i.id === itemAprobando.id ? { ...i, etapa: "grabacion" } : i)));
+                  // Releer la lista compartida fresca antes de escribir (no pisar cambios de otros).
+                  const { next } = await mutateShared("produccion-contenido", true, (current) =>
+                    current.map((i) => (i.id === itemAprobando.id ? { ...i, etapa: "grabacion" } : i))
+                  );
+                  setItems(next);
                   setAprobando(null);
                 }
               }}
