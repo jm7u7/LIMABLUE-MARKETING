@@ -777,7 +777,14 @@ function PendientesPanel({ initialDept, permisos }) {
 
           {editingId ? (
             <div className="mt-4 pt-4" style={{ borderTop: `1px solid ${T.border}` }}>
-              <TaskAttachments taskId={editingId} onCountChange={(n) => persist((tasks || []).map((t) => (t.id === editingId ? { ...t, archivosCount: n } : t)))} />
+              <TaskAttachments taskId={editingId} onCountChange={async (n) => {
+                // Releer la lista COMPARTIDA fresca antes de escribir, para no borrar
+                // tareas/cambios que otras personas guardaron mientras este formulario estaba abierto.
+                const { next } = await mutateShared("marketing-tasks-v2", true, (current) =>
+                  current.map((t) => (t.id === editingId ? { ...t, archivosCount: n } : t))
+                );
+                setTasks(next);
+              }} />
             </div>
           ) : (
             <p className="text-[11px] mt-3" style={{ color: "#94A3B8" }}>Guarda la tarea primero — después de crearla podrás adjuntar fotos o documentos aquí mismo.</p>
