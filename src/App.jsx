@@ -18,13 +18,13 @@ const nowStamp = () => new Date().toISOString();
 // en el estado local (que puede estar desactualizado si otra persona guardó algo mientras tanto).
 // Esto evita que una carga inicial lenta/fallida termine borrando datos de otros al agregar algo nuevo.
 async function mutateShared(key, shared, mutatorFn) {
-  let current = [];
-  try {
-    const res = await window.storage.get(key, shared);
-    current = res ? JSON.parse(res.value) : [];
-  } catch (e) {
-    current = [];
-  }
+  // Leemos el dato COMPARTIDO más reciente antes de escribir. get() devuelve null si la
+  // clave no existe (vacío real) y LANZA si el servidor falló (p.ej. Neon despertando).
+  // Si la lectura falla de verdad (no 404), RE-LANZAMOS: así el llamador no ejecuta su
+  // setState(next) ni escribe nada. NUNCA sobrescribimos con vacío = nunca se borran datos.
+  // La operación queda sin efecto y se puede reintentar (para entonces la BD ya despertó).
+  const res0 = await window.storage.get(key, shared);
+  const current = res0 ? JSON.parse(res0.value) : []; // null = vacío confirmado
   const next = mutatorFn(current);
   const res = await window.storage.set(key, JSON.stringify(next), shared);
   return { next, ok: !!res };
