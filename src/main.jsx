@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css"; // Tailwind (base + utilidades) — estilos de la app
 import "./storage.js"; // define window.storage ANTES de cargar la app
-import App from "./App.jsx";
+import App, { convertirReunionesVencidas } from "./App.jsx";
 import Login from "./Login.jsx";
 import UsersAdmin from "./UsersAdmin.jsx";
 import ChangePassword from "./ChangePassword.jsx";
@@ -19,13 +19,14 @@ function Splash() {
 
 // La pantalla pública de tickets (/#ticket) no requiere login.
 const IS_TICKET = typeof window !== "undefined" && window.location.hash === "#ticket";
+const IS_REVISION = typeof window !== "undefined" && /^#revisar-/.test(window.location.hash);
 
 function Root() {
   // undefined = verificando sesion | null = no logueado | objeto = usuario
   const [me, setMe] = useState(undefined);
 
   useEffect(() => {
-    if (IS_TICKET) return; // no consultamos sesión en el formulario público de tickets
+    if (IS_TICKET || IS_REVISION) return; // no consultamos sesión en formularios públicos (ticket, revisión)
     fetch("/api/me", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : null))
       .then(setMe)
@@ -42,11 +43,16 @@ function Root() {
     return () => { delete window.__LOGOUT__; };
   }, []);
 
+  // Convierte reuniones vencidas en pendientes bloqueados, una vez que hay sesión activa.
+  useEffect(() => {
+    if (me) convertirReunionesVencidas();
+  }, [me]);
+
   const [showUsers, setShowUsers] = useState(false);
   const [showPass, setShowPass] = useState(false);
 
   // Formulario público de tickets: se muestra directo, sin login ni botones de admin.
-  if (IS_TICKET) return <App />;
+  if (IS_TICKET || IS_REVISION) return <App />;
 
   if (me === undefined) return <Splash />;
   if (!me) return <Login onLogin={setMe} />;

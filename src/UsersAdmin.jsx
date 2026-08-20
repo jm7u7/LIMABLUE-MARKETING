@@ -9,9 +9,9 @@ const CARGOS = [
   { id: "gerente", label: "Gerente" },
   { id: "coordinador", label: "Coordinador" },
   { id: "edicion_audiovisual", label: "Edición Audiovisual" },
-  { id: "productor_audiovisual", label: "Productor Audiovisual" },
+  { id: "productor_audiovisual", label: "Realizador Audiovisual" },
   { id: "disenador", label: "Diseñador" },
-  { id: "paid_media", label: "Paid Media" },
+  { id: "productor_ia", label: "Productor IA" },
   { id: "otros", label: "Otros" },
   { id: "visitante", label: "Visitante" },
 ];
