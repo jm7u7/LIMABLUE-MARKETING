@@ -8,3 +8,12 @@ dist/
 .DS_Store
 
 _backups/
+_migrate.mjs
+_migrate.env
+_backup.mjs
+
+_dbtest.mjs
+_secrets*
+_localserver.mjs
+_rehearsal.mjs
+_q.mjs

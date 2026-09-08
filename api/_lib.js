@@ -1,19 +1,23 @@
 // Utilidades compartidas por las funciones serverless: BD, contraseñas, sesión.
 import crypto from "node:crypto";
-import { neon } from "@neondatabase/serverless";
+import postgres from "postgres";
 
 const SECRET = process.env.AUTH_SECRET || "";
 const SESSION_DAYS = 30;
 
-// Conexión a Postgres (Neon). Lee la cadena que Vercel inyecta al conectar la BD.
+// Conexión a Postgres estándar (Supabase o cualquier Postgres accesible por internet).
+// Lee la cadena de conexión desde las variables de entorno de Vercel.
 const CONN =
   process.env.DATABASE_URL ||
   process.env.POSTGRES_URL ||
   process.env.DATABASE_URL_UNPOOLED ||
   process.env.POSTGRES_URL_NON_POOLING ||
   "";
-// neon() devuelve una función tag que resuelve directamente al ARREGLO de filas.
-export const sql = neon(CONN);
+// postgres.js: la función tag `sql`...`` resuelve al ARREGLO de filas (misma API que antes).
+//  - ssl: "require"  -> hosts gestionados (Supabase/Neon).
+//  - prepare: false  -> requerido por el pooler de Supabase (pgbouncer, modo transacción).
+//  - max: 1          -> una conexión por invocación serverless.
+export const sql = postgres(CONN, { ssl: "require", prepare: false, max: 1, idle_timeout: 20 });
 
 /* ---------------- Esquema (idempotente) ---------------- */
 let schemaReady = null;
