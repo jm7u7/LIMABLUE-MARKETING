@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Limablue · Administración de cuentas</title>
+<style>
+  :root{--blue:#2563EB;--ink:#0F172A;--dim:#64748B;--bg:#F5F7FB;--card:#FFF;--border:#E2E8F0;--red:#DC2626;--green:#10B981}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink)}
+  .wrap{max-width:860px;margin:0 auto;padding:28px 18px 60px}
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:var(--dim);font-size:13px;margin:0 0 22px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 6px 20px rgba(15,23,42,.05)}
+  .card h2{font-size:15px;margin:0 0 14px;color:var(--blue)}
+  label{display:block;font-size:12px;font-weight:600;color:var(--dim);margin:10px 0 4px}
+  input,select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;font-size:14px;background:#fff}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  button{cursor:pointer;border:none;border-radius:9px;font-size:14px;font-weight:600;padding:11px 18px;background:var(--blue);color:#fff}
+  button.sec{background:#fff;color:var(--ink);border:1px solid var(--border)}
+  button.danger{background:#fff;color:var(--red);border:1px solid #FECACA;padding:6px 12px;font-size:12px}
+  .msg{font-size:13px;padding:9px 12px;border-radius:8px;margin:10px 0}
+  .ok{background:#ECFDF5;color:#047857;border:1px solid #A7F3D0}
+  .err{background:#FEF2F2;color:var(--red);border:1px solid #FECACA}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--border)}
+  th{color:var(--dim);font-weight:600;font-size:11px;text-transform:uppercase}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;background:#EFF4FF;color:var(--blue)}
+  a{color:var(--blue)}
+  .hidden{display:none}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .muted{font-size:12px;color:var(--dim)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div><h1>Administración de cuentas</h1><p class="sub">Crea, lista y elimina cuentas de acceso a Limablue · Marketing.</p></div>
+    <a href="/" class="muted">← Volver al panel</a>
+  </div>
+
+  <div id="gate" class="card"><p class="muted">Verificando sesión…</p></div>
+
+  <div id="panel" class="hidden">
+    <div class="card">
+      <h2>Crear cuenta</h2>
+      <div id="cmsg"></div>
+      <div class="row">
+        <div><label>Nombre</label><input id="c_nombre" placeholder="Nombre y apellido"></div>
+        <div><label>Correo</label><input id="c_email" type="email" placeholder="correo@limablue.com"></div>
+      </div>
+      <div class="row">
+        <div><label>Rol</label>
+          <select id="c_cargo">
+            <option value="gerente">Gerente</option>
+            <option value="coordinador">Coordinador</option>
+            <option value="disenador">Diseño Gráfico</option>
+            <option value="productor_audiovisual">Realizador Audiovisual</option>
+            <option value="edicion_audiovisual">Edición Audiovisual</option>
+            <option value="productor_ia">Productor IA</option>
+            <option value="paid_media">Paid Media</option>
+            <option value="contabilidad">Contabilidad</option>
+            <option value="otros">Otros</option>
+            <option value="visitante">Visitante</option>
+          </select>
+        </div>
+        <div><label>Contraseña</label><input id="c_pass" type="text" placeholder="mínimo 6 caracteres"></div>
+      </div>
+      <div style="margin-top:16px"><button onclick="crear()">Crear cuenta</button></div>
+    </div>
+
+    <div class="card">
+      <h2>Cuentas existentes (<span id="count">0</span>)</h2>
+      <div id="lmsg"></div>
+      <table><thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th></th></tr></thead>
+      <tbody id="tbody"></tbody></table>
+    </div>
+
+    <div class="card">
+      <h2>Cambiar mi contraseña</h2>
+      <div id="pmsg"></div>
+      <div class="row">
+        <div><label>Contraseña actual</label><input id="p_cur" type="password"></div>
+        <div><label>Contraseña nueva</label><input id="p_new" type="password" placeholder="mínimo 6 caracteres"></div>
+      </div>
+      <div style="margin-top:16px"><button class="sec" onclick="cambiarPass()">Actualizar contraseña</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const j = (el,cls,txt)=>{el.innerHTML = txt?('<div class="msg '+cls+'">'+txt+'</div>'):''};
+const api = (url,opts={})=>fetch(url,Object.assign({credentials:"include"},opts));
+let me=null;
+
+async function init(){
+  try{
+    const r = await api("/api/me");
+    if(!r.ok){ document.getElementById("gate").innerHTML='<p class="err msg">No has iniciado sesión. <a href="/">Inicia sesión</a> como Gerente o Coordinador y vuelve a esta página.</p>'; return; }
+    me = await r.json();
+    if(me.cargo!=="gerente" && me.cargo!=="coordinador"){
+      document.getElementById("gate").innerHTML='<p class="err msg">Tu cuenta ('+me.cargo+') no tiene permiso para administrar usuarios. Solo Gerente o Coordinador.</p>'; return;
+    }
+    document.getElementById("gate").classList.add("hidden");
+    document.getElementById("panel").classList.remove("hidden");
+    listar();
+  }catch(e){ document.getElementById("gate").innerHTML='<p class="err msg">Error de conexión.</p>'; }
+}
+
+async function listar(){
+  const r = await api("/api/users");
+  if(!r.ok){ j(document.getElementById("lmsg"),"err","No se pudo cargar la lista."); return; }
+  const {users} = await r.json();
+  document.getElementById("count").textContent = users.length;
+  const tb = document.getElementById("tbody"); tb.innerHTML="";
+  for(const u of users){
+    const tr=document.createElement("tr");
+    const del = u.id===me.id ? '<span class="muted">(tú)</span>' : '<button class="danger" data-id="'+u.id+'" data-em="'+u.email+'">Eliminar</button>';
+    tr.innerHTML='<td>'+esc(u.nombre)+'</td><td>'+esc(u.email)+'</td><td><span class="pill">'+esc(u.cargo)+'</span></td><td style="text-align:right">'+del+'</td>';
+    tb.appendChild(tr);
+  }
+  tb.querySelectorAll("button.danger").forEach(b=>b.onclick=()=>eliminar(b.dataset.id,b.dataset.em));
+}
+
+async function crear(){
+  const m=document.getElementById("cmsg");
+  const nombre=val("c_nombre"),email=val("c_email"),cargo=val("c_cargo"),password=val("c_pass");
+  if(!nombre||!email||!password){ j(m,"err","Completa nombre, correo y contraseña."); return; }
+  const r = await api("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nombre,email,cargo,password})});
+  const d = await r.json().catch(()=>({}));
+  if(!r.ok){ j(m,"err",d.error||"No se pudo crear."); return; }
+  j(m,"ok","Cuenta creada: "+email+" — ya puede iniciar sesión.");
+  document.getElementById("c_nombre").value="";document.getElementById("c_email").value="";document.getElementById("c_pass").value="";
+  listar();
+}
+
+async function eliminar(id,em){
+  if(!confirm("¿Eliminar la cuenta "+em+"? No podrá volver a iniciar sesión.")) return;
+  const r = await api("/api/users?id="+encodeURIComponent(id),{method:"DELETE"});
+  const d = await r.json().catch(()=>({}));
+  if(!r.ok){ j(document.getElementById("lmsg"),"err",d.error||"No se pudo eliminar."); return; }
+  j(document.getElementById("lmsg"),"ok","Cuenta eliminada."); listar();
+}
+
+async function cambiarPass(){
+  const m=document.getElementById("pmsg");
+  const currentPassword=val("p_cur"),newPassword=val("p_new");
+  if(!currentPassword||!newPassword){ j(m,"err","Completa ambas contraseñas."); return; }
+  const r = await api("/api/change-password",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({currentPassword,newPassword})});
+  const d = await r.json().catch(()=>({}));
+  if(!r.ok){ j(m,"err",d.error||"No se pudo cambiar."); return; }
+  j(m,"ok","Contraseña actualizada.");
+  document.getElementById("p_cur").value="";document.getElementById("p_new").value="";
+}
+
+const val=id=>document.getElementById(id).value.trim();
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+init();
+</script>
+</body>
+</html>

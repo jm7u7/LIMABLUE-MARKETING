@@ -3,4 +3,5 @@
 import { mkdirSync, copyFileSync } from "node:fs";
 mkdirSync("dist", { recursive: true });
 copyFileSync("index.html", "dist/index.html");
-console.log("build: dist/index.html listo");
+copyFileSync("admin.html", "dist/admin.html");
+console.log("build: dist/index.html + dist/admin.html listos");

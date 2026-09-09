@@ -3,7 +3,7 @@ import { sql, getUser, ensureSchema, hashPassword, readBody } from "./_lib.js";
 
 // Gestión de cuentas. Solo Gerente/Coordinador pueden listar, crear o borrar usuarios.
 const CARGOS = ["gerente", "coordinador", "edicion_audiovisual", "productor_audiovisual",
-  "disenador", "paid_media", "otros", "visitante"];
+  "disenador", "paid_media", "productor_ia", "contabilidad", "otros", "visitante"];
 const ADMIN = new Set(["gerente", "coordinador"]);
 
 export default async function handler(req, res) {
