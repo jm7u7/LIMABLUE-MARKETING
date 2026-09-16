@@ -97,7 +97,7 @@ let me=null;
 async function init(){
   try{
     const r = await api("/api/me");
-    if(!r.ok){ document.getElementById("gate").innerHTML='<p class="err msg">No has iniciado sesión. <a href="/">Inicia sesión</a> como Gerente o Coordinador y vuelve a esta página.</p>'; return; }
+    if(!r.ok){ renderLogin(); return; }
     me = await r.json();
     if(me.cargo!=="gerente" && me.cargo!=="coordinador"){
       document.getElementById("gate").innerHTML='<p class="err msg">Tu cuenta ('+me.cargo+') no tiene permiso para administrar usuarios. Solo Gerente o Coordinador.</p>'; return;
@@ -154,8 +154,26 @@ async function cambiarPass(){
   document.getElementById("p_cur").value="";document.getElementById("p_new").value="";
 }
 
-const val=id=>document.getElementById(id).value.trim();
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function renderLogin(msg){
+  document.getElementById("gate").innerHTML =
+    '<h2 style="margin-top:0">Iniciar sesión</h2>'
+    +'<p class="muted" style="margin:-8px 0 8px">Ingresa con tu cuenta de <b>Gerente</b> o <b>Coordinador</b> para administrar usuarios.</p>'
+    +(msg?'<div class="msg err">'+msg+'</div>':'')
+    +'<label>Correo</label><input id="l_email" type="email" placeholder="correo@limablue.com" autocomplete="username">'
+    +'<label>Contraseña</label><input id="l_pass" type="password" autocomplete="current-password">'
+    +'<div style="margin-top:16px"><button id="l_btn">Entrar</button></div>';
+  document.getElementById("l_btn").onclick = doLoginAdmin;
+  document.getElementById("l_pass").addEventListener("keydown",e=>{ if(e.key==="Enter") doLoginAdmin(); });
+}
+async function doLoginAdmin(){
+  const email=val("l_email"), password=val("l_pass");
+  if(!email||!password){ renderLogin("Completa correo y contraseña."); return; }
+  const r = await api("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password})});
+  if(!r.ok){ renderLogin("Correo o contraseña incorrectos."); return; }
+  location.reload();
+}
+function val(id){ return document.getElementById(id).value.trim(); }
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 init();
 </script>
 </body>
